@@ -15,6 +15,7 @@ OVPN_K8S_DOMAIN="${OVPN_KUBE_DOMAIN:-cluster.local}"
 #OVPN_K8S_DNS
 OVPN_DH="${OVPN_DH:-/etc/openvpn/pki/dh.pem}"
 OVPN_CERTS="${OVPN_CERTS:-/etc/openvpn/pki/certs.p12}"
+OVPN_MULTIPLE_CERTS="${OVPN_MULTIPLE_CERTS:-}"
 
 sed 's|{{OVPN_NETWORK}}|'"${OVPN_NETWORK}"'|' -i "${OVPN_CONFIG}"
 sed 's|{{OVPN_SUBNET}}|'"${OVPN_SUBNET}"'|' -i "${OVPN_CONFIG}"
@@ -25,6 +26,10 @@ sed 's|{{OVPN_K8S_SERVICE_NETWORK}}|'"${OVPN_K8S_SERVICE_NETWORK}"'|' -i "${OVPN
 sed 's|{{OVPN_K8S_SERVICE_SUBNET}}|'"${OVPN_K8S_SERVICE_SUBNET}"'|' -i "${OVPN_CONFIG}"
 sed 's|{{OVPN_K8S_DOMAIN}}|'"${OVPN_K8S_DOMAIN}"'|' -i "${OVPN_CONFIG}"
 sed 's|{{OVPN_K8S_DNS}}|'"${OVPN_K8S_DNS}"'|' -i "${OVPN_CONFIG}"
+
+if [ "${OVPN_MULTIPLE_CERTS}" ]; then
+    echo "duplicate-cn" >> "${OVPN_CONFIG}"
+fi
 
 echo "${OVPN_K8S_ROUTES}" | while IFS=',' read ROUTE; do
     IFS='/' read SUBNET CIDR <<< "${ROUTE}"
