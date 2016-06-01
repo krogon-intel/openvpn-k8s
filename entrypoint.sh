@@ -31,12 +31,24 @@ if [ "${OVPN_MULTIPLE_CERTS}" ]; then
     echo "duplicate-cn" >> "${OVPN_CONFIG}"
 fi
 
-echo "${OVPN_K8S_ROUTES}" | while IFS=',' read ROUTE; do
-    IFS='/' read SUBNET CIDR <<< "${ROUTE}"
-    NETMASK=$(ipcalc -m ${SUBNET}/${CIDR})
-    echo "push \"route ${SUBNET} ${NETMASK}\"" >> "${OVPN_CONFIG}"
-    iptables -t nat -A POSTROUTING -s ${OVPN_NETWORK}/${OVPN_SUBNET} -d ${SUBNET}/${CIDR} -o ${OVPN_NATDEVICE} -j MASQUERADE
-done
+if [ "${OVPN_K8S_ROUTES}" ]; then
+    sed 's%,%\n%g' <<< "${OVPN_K8S_ROUTES}" | sort | while read ROUTE; do
+        IFS="/:" read SUBNET CIDR PORT PROTO <<< "${ROUTE}"
+        NETMASK=$(ipcalc -m ${SUBNET}/${CIDR} | cut -d'=' -f2)
+
+        if [ "${SUBNET}/${CIDR}" != "$PREV_ROUTE" ]; then
+            echo "push \"route ${SUBNET} ${NETMASK}\"" >> "${OVPN_CONFIG}"
+        fi
+
+        if [ "${PORT}" ]; then
+            PROTO="${PROTO:-tcp}"
+            iptables -t nat -A POSTROUTING -s ${OVPN_NETWORK}/${OVPN_SUBNET} -d ${SUBNET}/${CIDR} -o ${OVPN_NATDEVICE} -p ${PROTO} --dport ${PORT} -j MASQUERADE
+        else
+            iptables -t nat -A POSTROUTING -s ${OVPN_NETWORK}/${OVPN_SUBNET} -d ${SUBNET}/${CIDR} -o ${OVPN_NATDEVICE} -j MASQUERADE
+        fi
+        PREV_ROUTE="${SUBNET}/${CIDR}"
+    done
+fi
 
 if [ "${OVPN_K8S_DNS}" ]; then
     echo "push \"dhcp-option DOMAIN ${OVPN_K8S_DOMAIN}\"" >> "${OVPN_CONFIG}"
