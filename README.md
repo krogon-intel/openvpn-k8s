@@ -137,6 +137,8 @@ Below is the complete list of available options that can be used to customize yo
 - **OVPN_SUBNET**: Network subnet allocated for openvpn client (default: 255.255.0.0).
 - **OVPN_PROTO**: Protocol used by openvpn tcp or udp (default: udp).
 - **OVPN_NATDEVICE**: Device connected to kuberentes service network (default: eth0).
+- **OVPN_K8S_ROUTES**: Comma separated routes for NAT with possibility to specify ports (example: 10.3.0.0/24:53/udp)
+- **OVPN_MULTIPLE_CERTS**: Allow multiple connections with a specific certificate
 - **OVPN_K8S_SERVICE_NETWORK**: Kubernetes service network (required).
 - **OVPN_K8S_SERVICE_SUBNET**: Kubernetes service network subnet (required).
 - **OVPN_K8S_DOMAIN**: Kuberentes cluster domain (default: cluster.local).
